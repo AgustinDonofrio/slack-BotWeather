@@ -9,24 +9,32 @@ const port = process.env.PORT || 3000;
 const slackEvents = createEventAdapter(slackSigningSecret);
 const slackClient = new WebClient(slackToken);
 
-slackEvents.on('app_mentions', (event) => {
-    console.log(`Got message for user ${event.user}: ${event.text}`);
+slackEvents.start(port).then(() => {
+    console.log(`Server started on port ${port}`)
+});
+
+slackEvents.on('app_mention', (data) => {
+    console.log(data);
+    const args = data.text.split(" ");
+    const command = args.splice(1, 1)[0];
+    const user_id = args.splice(0, 1)[0];
+    const params = args.join(' ');
+    console.log(command, params);
+    console.log(`Mensaje del usuario ${data.user}: ${data.text}`);
     (async () => {
         try {
             await slackClient.chat.postMessage({
-                channel: event.channel,
-                text: `Hola <@${event.user}>!`
-            })
+                channel: data.channel,
+                text: `El clima en <@${data.user}>!`
+            });
         } catch (error) {
-            console.log(error.data);
+            console.error(error);
         }
     }) ();
 });
 
 slackEvents.on('error', console.error);
 
-slackEvents.start(port).then(() => {
-    console.log(`Server started on port ${port}`)
-});
+
 
 
